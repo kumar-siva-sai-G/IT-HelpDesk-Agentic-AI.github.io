@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT Helpdesk Copilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --border: #e2e5eb;
+    --accent: #3b6cf5;
+    --accent-light: #eef2ff;
+    --accent2: #0fa67f;
+    --accent2-light: #e8f8f3;
+    --warn: #e5a100;
+    --warn-light: #fff8e6;
+    --danger: #e04545;
+    --danger-light: #fef2f2;
+    --text: #1a1e2c;
+    --text-secondary: #47516b;
+    --muted: #8a94a8;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 32px; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .logo { font-size: 24px; }
+  .header-title { font-size: 18px; font-weight: 700; color: var(--text); }
+  .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 12px;
+    background: var(--accent-light); color: var(--accent);
+    border: 1px solid #c7d7fe; font-weight: 500;
+  }
+
+  .container { max-width: 980px; margin: 0 auto; padding: 28px 24px; }
+
+  /* Stats row */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stat-val { font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+  .stat-card.green .stat-val { color: var(--accent2); }
+  .stat-card.blue .stat-val { color: var(--accent); }
+  .stat-card.yellow .stat-val { color: var(--warn); }
+  .stat-card.red .stat-val { color: var(--danger); }
+
+  /* Main grid */
+  .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .panel-header {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+    background: #fafbfc;
+  }
+  .panel-body { padding: 18px; }
+
+  /* Form */
+  textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px;
+    padding: 12px 14px; resize: vertical; min-height: 100px;
+    font-family: inherit; outline: none; transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,108,245,0.1); }
+  textarea::placeholder { color: var(--muted); }
+  input[type="text"] {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px;
+    padding: 10px 12px; margin-bottom: 12px; font-family: inherit; outline: none;
+  }
+  input[type="text"]::placeholder { color: var(--muted); }
+  input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,108,245,0.1); }
+  .btn {
+    width: 100%; padding: 12px; border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px;
+    transition: all 0.2s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border); margin-top: 8px; }
+
+  /* Priority selector */
+  .priority-row { display: flex; gap: 8px; margin: 12px 0; }
+  .priority-btn {
+    flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--muted); font-size: 12px; cursor: pointer;
+    transition: all 0.15s; font-weight: 500;
+  }
+  .priority-btn.active.low { border-color: var(--accent2); background: var(--accent2-light); color: var(--accent2); }
+  .priority-btn.active.med { border-color: var(--warn); background: var(--warn-light); color: var(--warn); }
+  .priority-btn.active.high { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+
+  /* Result box */
+  .result-box {
+    margin-top: 14px; padding: 14px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; line-height: 1.7; display: none;
+  }
+  .result-box.visible { display: block; }
+  .result-box.success { border-color: var(--accent2); background: var(--accent2-light); }
+  .result-box.escalated { border-color: var(--warn); background: var(--warn-light); }
+  .result-box.error { border-color: var(--danger); background: var(--danger-light); }
+  .result-badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 10px; margin-bottom: 8px; font-weight: 600; }
+
+  /* Pipeline stages */
+  .pipeline { display: flex; flex-direction: column; gap: 8px; }
+  .stage {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; transition: all 0.3s;
+  }
+  .stage.active { border-color: var(--accent); background: var(--accent-light); }
+  .stage.done { border-color: var(--accent2); background: var(--accent2-light); }
+  .stage.error { border-color: var(--danger); background: var(--danger-light); }
+  .stage-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .stage.active .stage-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1s infinite; }
+  .stage.done .stage-dot { background: var(--accent2); }
+  .stage.error .stage-dot { background: var(--danger); }
+  .stage-name { flex: 1; font-weight: 500; color: var(--text); }
+  .stage-detail { font-size: 11px; color: var(--muted); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Ticket list */
+  .ticket-list { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; }
+  .ticket-item {
+    padding: 12px 14px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .ticket-item:hover { border-color: var(--accent); background: var(--accent-light); }
+  .ticket-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .ticket-id { font-weight: 600; color: var(--accent); font-family: monospace; font-size: 13px; }
+  .ticket-stage { color: var(--muted); }
+  .ticket-preview { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+
+  /* Loader */
+  .loader { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .col-span-2 { grid-column: span 2; }
+
+  /* Framework tags */
+  .fw-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .fw-tag { font-size: 11px; padding: 3px 10px; border-radius: 12px; border: 1px solid; font-weight: 500; }
+  .fw-tag.crew { color: #7c3aed; border-color: #ddd6fe; background: #f5f3ff; }
+  .fw-tag.autogen { color: #2563eb; border-color: #bfdbfe; background: #eff6ff; }
+  .fw-tag.lang { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
+  .fw-tag.groq { color: #ea580c; border-color: #fed7aa; background: #fff7ed; }
+
+  /* Ticket Detail Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    display: none; align-items: center; justify-content: center; z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; width: 640px; max-width: 90vw; max-height: 80vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .modal-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    font-weight: 600; font-size: 15px; display: flex; justify-content: space-between; align-items: center;
+    background: #fafbfc; border-radius: 16px 16px 0 0;
+  }
+  .modal-close {
+    cursor: pointer; color: var(--muted); font-size: 18px; padding: 4px 8px;
+    border-radius: 6px; transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--bg); color: var(--text); }
+  .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+  .detail-section { margin-bottom: 18px; }
+  .detail-title {
+    font-size: 13px; font-weight: 600; color: var(--accent);
+    margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🤖</div>
+  <div>
+    <div class="header-title">Agentic IT Helpdesk Copilot</div>
+    <div class="header-sub">Multi-agent system · SASTRA Deemed University</div>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+    <span class="badge">CrewAI</span>
+    <span class="badge">AutoGen</span>
+    <span class="badge">LangGraph</span>
+    <span class="badge">Groq</span>
+    <span class="badge">ChromaDB</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Stats row -->
+  <div class="stats" id="stats-row">
+    <div class="stat-card green"><div class="stat-val" id="stat-resolved">–</div><div class="stat-label">Resolved</div></div>
+    <div class="stat-card yellow"><div class="stat-val" id="stat-escalated">–</div><div class="stat-label">Escalated</div></div>
+    <div class="stat-card blue"><div class="stat-val" id="stat-total">–</div><div class="stat-label">Total Tickets</div></div>
+    <div class="stat-card"><div class="stat-val" id="stat-kb">–</div><div class="stat-label">KB Documents</div></div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- Submit Panel -->
+    <div class="panel">
+      <div class="panel-header">📝 Submit IT Ticket</div>
+      <div class="panel-body">
+        <input type="text" id="session-id" placeholder="Session ID (optional)" />
+        <textarea id="ticket-msg" placeholder="Describe your IT problem...&#10;e.g. 'Lab server 101 is unreachable, I have an exam tomorrow!'"></textarea>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;font-weight:500;">Priority override:</div>
+        <div class="priority-row">
+          <button class="priority-btn low" onclick="setPrio('LOW',this)">🟢 Low</button>
+          <button class="priority-btn med active" onclick="setPrio('MEDIUM',this)">🟡 Medium</button>
+          <button class="priority-btn high" onclick="setPrio('HIGH',this)">🔴 High</button>
+        </div>
+        <button class="btn btn-primary" onclick="submitTicket()">🚀 Submit Ticket</button>
+        <button class="btn btn-secondary" onclick="fillDemo()">🎭 Fill Demo Ticket</button>
+
+        <div class="result-box" id="result-box">
+          <span class="result-badge" id="result-badge"></span>
+          <div id="result-text"></div>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);" id="result-tid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline Panel -->
+    <div class="panel">
+      <div class="panel-header">⚡ Pipeline Status</div>
+      <div class="panel-body">
+        <div class="pipeline" id="pipeline">
+          <div class="stage" id="s-ingest">
+            <div class="stage-dot"></div>
+            <div class="stage-name">1. Ticket Ingest</div>
+            <div class="stage-detail">CrewAI</div>
+          </div>
+          <div class="stage" id="s-diagnose">
+            <div class="stage-dot"></div>
+            <div class="stage-name">2. Root-Cause Diagnosis</div>
+            <div class="stage-detail">CrewAI + ChromaDB RAG</div>
+          </div>
+          <div class="stage" id="s-check">
+            <div class="stage-dot"></div>
+            <div class="stage-name">3. System Check</div>
+            <div class="stage-detail">AutoGen + HITL</div>
+          </div>
+          <div class="stage" id="s-solve">
+            <div class="stage-dot"></div>
+            <div class="stage-name">4. Solution Generation</div>
+            <div class="stage-detail">CrewAI + Playbook RAG</div>
+          </div>
+          <div class="stage" id="s-escalate">
+            <div class="stage-dot"></div>
+            <div class="stage-name">5. Escalation (if needed)</div>
+            <div class="stage-detail">AutoGen + Mem0</div>
+          </div>
+        </div>
+        <div class="fw-tags">
+          <span class="fw-tag crew">CrewAI roles</span>
+          <span class="fw-tag autogen">AutoGen HITL</span>
+          <span class="fw-tag lang">LangGraph state</span>
+          <span class="fw-tag groq">Groq LLM</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Tickets -->
+    <div class="panel col-span-2">
+      <div class="panel-header">📋 Recent Tickets <span id="refresh-btn" style="margin-left:auto;font-size:12px;color:var(--accent);cursor:pointer;font-weight:500;" onclick="loadTickets()">↻ Refresh</span></div>
+      <div class="panel-body">
+        <div class="ticket-list" id="ticket-list">
+          <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">No tickets yet. Submit one above!</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Ticket Detail Modal -->
+<div class="modal-overlay" id="ticket-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span>📋 Ticket Details</span>
+      <span class="modal-close" onclick="closeModal()">✕</span>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div style="text-align:center;padding:30px;color:var(--muted);">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let prio = 'MEDIUM';
+
+function setPrio(p, btn) {
+  prio = p;
+  document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function fillDemo() {
+  const demos = [
+    "Lab server lab-server-101 is completely unreachable! I have an exam submission tomorrow morning.",
+    "WiFi is not working in room 301, multiple students are affected and we can't connect at all.",
+    "Can't SSH into compute-node-05, I keep getting 'Connection refused'. My research runs are stuck.",
+    "The database server is down, all student projects that need db access are failing.",
+    "Printer in Lab 2 stopped working after this morning's update. Jobs are stuck in queue.",
+    "I forgot my password and cannot log in to my email."
+  ];
+  document.getElementById('ticket-msg').value = demos[Math.floor(Math.random() * demos.length)];
+}
+
+const stageIds = ['s-ingest','s-diagnose','s-check','s-solve','s-escalate'];
+
+function resetPipeline() {
+  stageIds.forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'stage';
+  });
+}
+
+function animatePipeline(finalStatus) {
+  resetPipeline();
+  const stages = finalStatus === 'escalated' ? stageIds : stageIds.slice(0, 4);
+  let i = 0;
+  function next() {
+    if (i > 0) {
+      document.getElementById(stages[i-1]).className = 'stage done';
+    }
+    if (i < stages.length) {
+      document.getElementById(stages[i]).className = 'stage active';
+      i++;
+      setTimeout(next, 900);
+    }
+  }
+  next();
+}
+
+async function submitTicket() {
+  const msg = document.getElementById('ticket-msg').value.trim();
+  const sid = document.getElementById('session-id').value.trim();
+  if (!msg) { alert('Please describe your problem first.'); return; }
+
+  const btn = document.querySelector('.btn-primary');
+  btn.innerHTML = '<span class="loader"></span> Processing...';
+  btn.disabled = true;
+
+  animatePipeline('pending');
+
+  const resultBox = document.getElementById('result-box');
+  resultBox.className = 'result-box';
+  resultBox.style.display = 'none';
+
+  try {
+    const resp = await fetch('/ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, session_id: sid, priority: prio }),
+    });
+
+    const data = await resp.json();
+
+    if (resp.ok) {
+      const isEscalated = data.status === 'escalated';
+      animatePipeline(data.status);
+
+      resultBox.className = `result-box visible ${isEscalated ? 'escalated' : 'success'}`;
+      const badge = document.getElementById('result-badge');
+      badge.textContent = isEscalated ? '⚠️ Escalated' : '✅ Resolved';
+      badge.style.background = isEscalated ? 'var(--warn-light)' : 'var(--accent2-light)';
+      badge.style.color = isEscalated ? 'var(--warn)' : 'var(--accent2)';
+      badge.style.border = `1px solid ${isEscalated ? 'var(--warn)' : 'var(--accent2)'}`;
+      document.getElementById('result-text').innerHTML = formatSolution(data.message);
+      document.getElementById('result-tid').innerHTML = `Ticket ID: <strong>${data.ticket_id}</strong> — <a href="javascript:viewTicket('${data.ticket_id}')" style="color:var(--accent);">View Full Details</a>`;
+
+    } else {
+      resultBox.className = 'result-box visible error';
+      document.getElementById('result-badge').textContent = '❌ Error';
+      document.getElementById('result-text').textContent = data.detail || 'Unknown error';
+      resetPipeline();
+    }
+  } catch (e) {
+    resultBox.className = 'result-box visible error';
+    document.getElementById('result-badge').textContent = '❌ Connection Error';
+    document.getElementById('result-text').textContent = 'Could not reach the server. Is it running?';
+    resetPipeline();
+  }
+
+  btn.innerHTML = '🚀 Submit Ticket';
+  btn.disabled = false;
+  loadTickets();
+}
+
+function formatSolution(text) {
+  if (!text) return '<em>No solution available</em>';
+  return text
+    .replace(/\n/g, '<br>')
+    .replace(/(\d+)\.\s/g, '<br><strong>$1.</strong> ');
+}
+
+async function loadTickets() {
+  try {
+    const resp = await fetch('/tickets?limit=20');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const tickets = data.tickets || [];
+    const list = document.getElementById('ticket-list');
+
+    // ── Update stats from database ──
+    const total = tickets.length;
+    const escalated = tickets.filter(t => t.last_stage === 'ESCALATED').length;
+    const resolved = total - escalated;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-resolved').textContent = resolved;
+    document.getElementById('stat-escalated').textContent = escalated;
+
+    if (tickets.length === 0) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">No tickets yet. Submit one above!</div>';
+      return;
+    }
+
+    list.innerHTML = tickets.map(t => {
+      const isEscalated = t.last_stage === 'ESCALATED';
+      const statusColor = isEscalated ? 'var(--warn)' : 'var(--accent2)';
+      const statusBg = isEscalated ? 'var(--warn-light)' : 'var(--accent2-light)';
+      const statusLabel = isEscalated ? '⚠️ ESCALATED' : '✅ RESOLVED';
+      return `
+        <div class="ticket-item" onclick="viewTicket('${t.ticket_id}')">
+          <div class="ticket-item-header">
+            <span class="ticket-id">${t.ticket_id}</span>
+            <span style="color:${statusColor};background:${statusBg};font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;">${statusLabel}</span>
+          </div>
+          <div class="ticket-preview">Click to view solution & diagnosis details →</div>
+        </div>`;
+    }).join('');
+  } catch (e) { /* server may not be running */ }
+}
+
+/* ── Ticket Detail Modal ─────────────────────────────── */
+
+function closeModal() {
+  document.getElementById('ticket-modal').classList.remove('open');
+}
+
+async function viewTicket(id) {
+  const modal = document.getElementById('ticket-modal');
+  const body = document.getElementById('modal-body');
+  modal.classList.add('open');
+  body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);"><span class="loader"></span> Loading ticket details...</div>';
+
+  try {
+    const resp = await fetch(`/ticket/${id}`);
+    if (!resp.ok) { body.innerHTML = `<div style="color:var(--danger);padding:20px;">Ticket not found.</div>`; return; }
+    const data = await resp.json();
+
+    let html = `<div style="margin-bottom:16px;font-size:16px;font-weight:700;color:var(--accent);font-family:monospace;">🎫 ${id}</div>`;
+
+    const stageMap = { INGESTED: '📝 Ticket Ingested', DIAGNOSED: '🔍 Diagnosis', CHECKED: '⚙️ System Check', SOLVED: '✅ Solution', ESCALATED: '⚠️ Escalated' };
+
+    for (const stage of data.stages) {
+      const label = stageMap[stage.stage] || stage.stage;
+      const d = stage.data;
+
+      html += `<div class="detail-section">`;
+      html += `<div class="detail-title">${label}</div>`;
+
+      if (stage.stage === 'INGESTED') {
+        const t = d.ticket || {};
+        html += field('Problem', t.problem_summary);
+        html += field('Resource', t.resource);
+        html += field('Category', t.category);
+        html += field('Priority', d.priority, d.priority === 'HIGH' ? 'var(--danger)' : d.priority === 'MEDIUM' ? 'var(--warn)' : 'var(--accent2)');
+        if (t.urgency_description) html += field('Urgency', t.urgency_description);
+
+      } else if (stage.stage === 'DIAGNOSED') {
+        const hyps = d.hypotheses || [];
+        hyps.forEach((h, i) => {
+          const confPct = Math.round((h.confidence || 0) * 100);
+          const barColor = confPct >= 70 ? 'var(--accent2)' : confPct >= 50 ? 'var(--warn)' : 'var(--danger)';
+          html += `<div style="margin-bottom:10px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">`;
+          html += `<div style="font-weight:600;font-size:13px;color:var(--text);">#${i+1} ${escapeHtml(h.hypothesis)}</div>`;
+          html += `<div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+            <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+              <div style="width:${confPct}%;height:100%;background:${barColor};border-radius:3px;"></div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:${barColor};">${confPct}%</span>
+          </div>`;
+          if (h.evidence) html += `<div style="font-size:12px;color:var(--text-secondary);">${escapeHtml(h.evidence)}</div>`;
+          if (h.suggested_check) html += `<div style="font-size:11px;color:var(--accent);margin-top:4px;font-weight:500;">Check: ${escapeHtml(h.suggested_check)}</div>`;
+          html += `</div>`;
+        });
+
+      } else if (stage.stage === 'CHECKED') {
+        const ping = d.ping || {};
+        const svc = d.service || {};
+        const mem = d.memory || {};
+        const disk = d.disk || {};
+        const analysis = d.analysis || {};
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">`;
+        html += miniCard('Ping', ping.success ? '✅ OK' : '❌ Failed', ping.success ? 'var(--accent2)' : 'var(--danger)');
+        html += miniCard('Service', svc.status || '?', svc.status === 'active' ? 'var(--accent2)' : 'var(--danger)');
+        html += miniCard('Memory', mem.alert ? '⚠️ Alert' : '✅ OK', mem.alert ? 'var(--warn)' : 'var(--accent2)');
+        html += miniCard('Disk', disk.alert ? '⚠️ Alert' : '✅ OK', disk.alert ? 'var(--warn)' : 'var(--accent2)');
+        html += `</div>`;
+        if (analysis.confirmed_cause) html += field('Confirmed Cause', analysis.confirmed_cause);
+        if (analysis.severity) html += field('Severity', analysis.severity, analysis.severity === 'CRITICAL' || analysis.severity === 'HIGH' ? 'var(--danger)' : 'var(--warn)');
+        if (analysis.summary) html += field('Analysis', analysis.summary);
+
+      } else if (stage.stage === 'SOLVED') {
+        const reply = d.user_reply || d.solution || '';
+        const adminCmds = d.admin_commands || '';
+        const fixTime = d.estimated_fix_time || '';
+        const followUp = d.follow_up_question || '';
+
+        if (reply) {
+          const replyText = Array.isArray(reply) ? reply.map((s,i) => `${i+1}. ${s}`).join('\n') : reply;
+          html += `<div style="background:var(--accent2-light);border:1px solid #a7f3d0;border-radius:8px;padding:12px;margin-bottom:10px;">`;
+          html += `<div style="font-size:11px;font-weight:600;color:var(--accent2);margin-bottom:6px;">💡 Solution for User</div>`;
+          html += `<div style="font-size:13px;line-height:1.7;white-space:pre-wrap;color:var(--text);">${escapeHtml(replyText)}</div>`;
+          html += `</div>`;
+        }
+        if (adminCmds) {
+          const cmdText = Array.isArray(adminCmds) ? adminCmds.map((s,i) => `${i+1}. ${s}`).join('\n') : adminCmds;
+          html += `<div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:12px;margin-bottom:10px;">`;
+          html += `<div style="font-size:11px;font-weight:600;color:#7c3aed;margin-bottom:6px;">🔧 Admin Commands</div>`;
+          html += `<div style="font-size:12px;line-height:1.7;font-family:monospace;white-space:pre-wrap;color:#5b21b6;">${escapeHtml(cmdText)}</div>`;
+          html += `</div>`;
+        }
+        if (fixTime) html += field('⏱️ Est. Fix Time', fixTime);
+        if (followUp) html += field('💬 Follow-up', followUp);
+
+      } else if (stage.stage === 'ESCALATED') {
+        html += `<div style="background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;white-space:pre-wrap;color:var(--text);">${escapeHtml(d.summary || JSON.stringify(d))}</div>`;
+      }
+
+      html += `</div>`;
+    }
+
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load ticket: ${e.message}</div>`;
+  }
+}
+
+function field(label, value, color) {
+  if (!value) return '';
+  const style = color ? `color:${color};font-weight:600;` : 'color:var(--text);';
+  return `<div style="margin-bottom:6px;font-size:13px;"><span style="color:var(--muted);margin-right:6px;font-weight:500;">${label}:</span><span style="${style}">${escapeHtml(String(value))}</span></div>`;
+}
+
+function miniCard(label, value, color) {
+  return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;">
+    <div style="font-size:11px;color:var(--muted);font-weight:500;">${label}</div>
+    <div style="font-size:14px;font-weight:600;color:${color};margin-top:3px;">${value}</div>
+  </div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function loadKBStats() {
+  try {
+    const resp = await fetch('/kb/stats');
+    if (!resp.ok) return;
+    const stats = await resp.json();
+    const total = (stats.incidents || 0) + (stats.playbooks || 0);
+    document.getElementById('stat-kb').textContent = total;
+  } catch (e) {}
+}
+
+// Init — load stats from database on every page load
+loadTickets();
+loadKBStats();
+</script>
+</body>
+</html>

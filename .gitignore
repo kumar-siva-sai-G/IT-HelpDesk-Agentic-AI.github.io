@@ -1,0 +1,23 @@
+# Environments
+.env
+
+# Database
+tickets.db
+
+# Vector store cache
+kb/chroma_store/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE/OS files
+.DS_Store
+.vscode/
+.idea/
